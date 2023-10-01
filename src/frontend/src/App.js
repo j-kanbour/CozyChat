@@ -1,8 +1,8 @@
 import React from 'react';
 import { createStackNavigator } from 'react-navigation-stack';
 import { createAppContainer } from 'react-navigation';
-import ChatScreen from './ChatScreen';
-import HomeScreen from './HomeScreen';
+import ChatScreen from 'src/pages/ChatScreen';
+import HomeScreen from 'src/pages/HomeScreen';
 
 const AppNavigator = createStackNavigator(
   {
