@@ -1,6 +1,7 @@
 // SignInScreen.js
 import React, { useState } from 'react';
 import { View, TextInput, Button, StyleSheet} from 'react-native';
+import axios from 'axios';
 
 const SignInScreen = ({ navigation }) => {
   const [name, setName_in] = useState('');
@@ -10,10 +11,44 @@ const SignInScreen = ({ navigation }) => {
   const [identifier_2, setPass_up] = useState('');
   const [identifier_3, pubkey_up] = useState('');
 
-  const handleSignIn = () => {
-    // You can perform validation here and navigate to the main app screen if the input is valid.
-    // For simplicity, let's just navigate to the main screen without validation.
-    navigation.navigate('Home');
+  const handleNewSignUp = async () => {
+    try {
+        const response = await axios.post("C:/Users/r2jk3/Desktop/chat/CozyChat/src/backend/src/user.py", {
+          username: name, // Send the username and password as JSON data
+          password: identifier,
+        });
+  
+        if (response.status === 200) {
+          // Authentication successful
+          navigation.navigate('Home'); // Navigate to the main app screen
+        } else {
+          // Handle authentication failure
+          console.log('Authentication failed');
+        }
+      } catch (error) {
+        // Handle network or server errors
+        console.error('Error:', error);
+      }
+  };
+
+  const handleSignIn = async () => {
+    try {
+      const response = await axios.post('C:/Users/r2jk3/Desktop/chat/CozyChat/src/backend/src/user.py', {
+        username: name, // Send the username and password as JSON data
+        password: identifier,
+      });
+
+      if (response.status === 200) {
+        // Authentication successful
+        navigation.navigate('Main'); // Navigate to the main app screen
+      } else {
+        // Handle authentication failure
+        console.log('Authentication failed');
+      }
+    } catch (error) {
+      // Handle network or server errors
+      console.error('Error:', error);
+    }
   };
 
   return (
@@ -33,7 +68,7 @@ const SignInScreen = ({ navigation }) => {
         <Button
         style={marginBottom=20}
         title="Sign In"
-        onPress={handleSignIn}
+        onPress={handleNewSignUp}
         />
 
         <View style={styles.separator1} />

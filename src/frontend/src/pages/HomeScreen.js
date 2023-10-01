@@ -4,6 +4,7 @@ import { View, TextInput, Button, FlatList, Text, StyleSheet } from 'react-nativ
 const HomeScreen = ({ navigation }) => {
   const [text, setText] = useState('');
   const [messages, setMessages] = useState([]);
+  const [displayedMessages, setDisplayedMessages] = useState([]);
 
   const handleTextChange = (newText) => {
     setText(newText);
@@ -11,8 +12,9 @@ const HomeScreen = ({ navigation }) => {
 
   const handleSend = () => {
     if (text.trim() !== '') {
-      // Add the new message to the messages array
-      setMessages([...messages, text]);
+      const newMessages = [...messages, text];
+      setMessages(newMessages);
+      setDisplayedMessages(newMessages.slice().reverse());
 
       // Clear the input field
       setText('');
@@ -22,14 +24,14 @@ const HomeScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <FlatList
-        data={messages}
+        data={displayedMessages}
         renderItem={({ item }) => (
           <View style={styles.messageContainer}>
             <Text style={styles.messageText}>{item}</Text>
           </View>
         )}
         keyExtractor={(item, index) => index.toString()}
-        inverted={true} // Reverse the order of messages
+        inverted={true} // Reverse the display order so newest messages are at the bottom
       />
       <View style={styles.inputContainer}>
         <TextInput
