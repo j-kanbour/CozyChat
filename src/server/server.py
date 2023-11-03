@@ -4,11 +4,9 @@ import sys, select, json
 import User_auth
 
 # acquire server host and port from command line parameter
-if len(sys.argv) != 2:
-    print("\n===== Error usage, python3 TCPServer3.py SERVER_PORT ======\n")
-    exit(0)
-serverHost = "192.168.0.183"
-serverPort = int(sys.argv[1])
+
+serverHost = "192.168.1.210"
+serverPort = 5050
 serverAddress = (serverHost, serverPort)
 
 # define socket for the server side and bind address
@@ -59,10 +57,14 @@ class ClientThread(Thread):
                 # handle message from the client
                 if action == 'new user':
                     print("[recv] New user request")
-                    if User_auth.new_user(data['Username'], data['password']):
-                        message = 'Username taken, try another one'
+                    if User_auth.new_user(data['username'], data['email'], data['password']) == 1:
+                        message = 'FAIL: Username'
+                    elif User_auth.new_user(data['username'], data['email'], data['password']) == 2:
+                        message = 'FAIL: Email'
+                    elif User_auth.new_user(data['username'], data['email'], data['password']) == 3:
+                        message = 'SUCCESS'
                     else:
-                        message = f'Welcome {action["Username"]}'
+                        message = 'INTERNAL ERROR'
                     
                     print('[send] ' + message)
                     self.clientSocket.send(message.encode())
@@ -70,33 +72,15 @@ class ClientThread(Thread):
 
                 elif action == 'login':
                     print("[recv] New user request")
-                    if User_auth.auth_login(data['Username'], data['password']):
-                        message = 'Incorrect username or password'
+                    if User_auth.auth_login(data['username'], data['password']):
+                        message = 'FAIL'
                     else:
-                        message = f'Welcome {action["Username"]}'
+                        message = 'SUCCESS'
                     
                     print('[send] ' + message)
                     self.clientSocket.send(message.encode())
                     continue
-                    
-                else:
-                    print("[recv] " + message)
-                    print("[send] Cannot understand this message")
-                    message = 'Cannot understand this message'
-                    self.clientSocket.send(message.encode())
-
-    def process_login(self):
-        message = 'user credentials request'
-        print('[send] ' + message)
-        self.clientSocket.send(message.encode())
-
-        # use recv() to receive message from the client
-        data = self.clientSocket.recv(1024)
-        message = data.decode()
-
     
-
-
 print("\n===== Server is running =====")
 print("===== Waiting for connection request from clients...=====")
 
