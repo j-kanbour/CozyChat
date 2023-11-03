@@ -34,16 +34,8 @@ while True:
     # parse the message received from server and take corresponding actions
     if receivedMessage == "":
         print("[recv] Message from server is empty!")
-
     elif receivedMessage == "user credentials request":
         print("[recv] You need to provide username and password to login")
-        username = input("Username: ")
-        password = input("Password: ")
-
-        message = f'{username} {password}'
-        print('[send] ' + message)
-        clientSocket.send(message.encode())
-
     elif receivedMessage == "download filename":
         print("[recv] You need to provide the file name you want to download")
     else:
