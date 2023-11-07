@@ -1,0 +1,8 @@
+CREATE DATABAE server_db;
+
+CREATE TABLE users (
+    uID SERIAL PRIMARY KEY,
+    Name VARCHAR(255) NOT NULL,
+    Email VARCHAR(255) UNIQUE NOT NULL,
+    Password TEXT NOT NULL
+);
