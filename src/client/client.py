@@ -1,16 +1,25 @@
 import socket
 import threading, sys, json, time
+import key_handle, pickle
 
 # Server configuration
 SERVER_HOST = '192.168.1.210'
 SERVER_PORT = 5050
 
+
+#holds the number of failed log in attempts
 fail_log_count = 0
-
+#current chat receievr
 curr_chat = ''
+curr_user = ''
 
+aes_send_cipher = None
+aes_recv_cipher = None
+
+#handles user login
 def log_in(clientSocket):
     global fail_log_count
+    global curr_user
     while True:
         if fail_log_count >= 5:
             print("Too many failed attempts: access locked for 1 minute")
@@ -34,12 +43,14 @@ def log_in(clientSocket):
         if login_result == "SUCCESS":
             print(f"Welcome {username}")
             fail_log_count = 0
+            curr_user = username
             return True
         elif login_result == "FAIL":
             print("Unsuccessful Login")
             fail_log_count += 1
             continue
 
+#handles new account
 def new_acc(clientSocket):
     while True:
         username = input("Username: ")
@@ -61,6 +72,7 @@ def new_acc(clientSocket):
 
         if login_result == "SUCCESS":
             print(f"Welcome {username}")
+            curr_user = username
             return True
         elif login_result == "FAIL: Email":
             print("Email already registered, try again")
@@ -79,7 +91,7 @@ def receive_messages(client_socket):
             message = client_socket.recv(1024)
             if not message:
                 break
-            print(f"{curr_chat}: {message.decode('utf-8')}")
+            print(f"\n{curr_chat}: {message.decode('utf-8')}")
         except Exception as e:
             print(f"Error receiving message: {e}")
             break
@@ -101,12 +113,28 @@ def authentication(clientSocket):
 
 def main():
     global curr_chat
+    global curr_user
+    global aes_cipher
+
     clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     clientSocket.connect((SERVER_HOST, SERVER_PORT))
     
     #authenitcate the user
     while True:
-        if authentication(clientSocket): break
+        if authentication(clientSocket): 
+
+            #generate public and private key pair
+            public_key = key_handle.RSA_keygen()
+            print(public_key)
+            #send public key to server
+            message = json.dumps({
+            "action": "add_key",
+            "username": curr_user,
+            "publicKey": public_key.decode('utf-8'),
+            })
+
+            clientSocket.sendall(message.encode())
+            break
 
     #try to connection with other user
     while True:
@@ -126,13 +154,19 @@ def main():
         if chat_response == "USER NOT ACTIVE":
             print('User not active, try again')
             continue
-        else: 
+        else:
+            #collect receiver public key
+            rec_pubic_key = chat_response
             curr_chat = receiver
+
+            #encrypt AES key with receiver public key
+            aes_key, aes_send_cipher = key_handle.AES_keygen()
+            message_aes_key = key_handle.RSA_encrypt(rec_pubic_key, aes_key)
+
+            #send AES key to reciever
+            clientSocket.send(message_aes_key.encode('utf-8'))
             break
-
-    #establish secure connection with user
-    
-
+            
     #comunicating with other
     receive_thread = threading.Thread(target=receive_messages, args=(clientSocket,))
     receive_thread.start()
@@ -147,3 +181,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+#finish encryption
+#ecnrypt / decrpt password entries
