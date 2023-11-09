@@ -1,89 +1,42 @@
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives import serialization
-from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives.asymmetric import padding
+import random
+from sympy import isprime
 
-def RSA_keygen():
+def generate_prime(bits):
+    while True:
+        num = random.getrandbits(bits)
+        if isprime(num):
+            return num
 
-    # Generate an RSA key pair
-    private_key = rsa.generate_private_key(
-        public_exponent=65537,  # Commonly used value for public exponent
-        key_size=2048,          # Choose your desired key size (e.g., 2048 bits)
-    )
+def generate_keypair(bits):
+    p = generate_prime(bits)
+    q = generate_prime(bits)
+    n = p * q
+    phi = (p - 1) * (q - 1)
 
-    # Serialize the private key and write it to a file (PEM format)
-    private_key_pem = private_key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption()
-    )
+    e = random.randint(1, phi - 1)
+    while math.gcd(e, phi) != 1:
+        e = random.randint(1, phi - 1)
 
-    with open('private_key.pem', 'wb') as private_key_file:
-        private_key_file.write(private_key_pem)
+    d = pow(e, -1, phi)
 
-    # Extract the public key from the private key
-    public_key = private_key.public_key()
+    return ((n, e), (n, d))
 
-    # Serialize the public key and write it to a file (PEM format)
-    public_key_pem = public_key.public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo
-    )
+def encrypt(message, public_key):
+    n, e = public_key
+    ciphertext = [pow(ord(char), e, n) for char in message]
+    return ciphertext
 
-    with open('public_key.pem', 'wb') as public_key_file:
-        public_key_file.write(public_key_pem)
+def decrypt(ciphertext, private_key):
+    n, d = private_key
+    decrypted = [chr(pow(char, d, n)) for char in ciphertext]
+    return ''.join(decrypted)
 
-    return public_key_pem
+# Example usage:
+public_key, private_key = generate_keypair(1024)
+message = "Hello, RSA!"
+ciphertext = encrypt(message, public_key)
+decrypted_message = decrypt(ciphertext, private_key)
 
-def RSA_encrypt(public_key, message):
-
-    public_key = serialization.load_pem_private_key(public_key, password=None)
-
-    encrypted_data = public_key.encrypt(
-        message,
-        padding.OAEP(
-            mgf=padding.MGF1(algorithm=padding.ALGORITHMS.SHA256),
-            algorithm=padding.ALGORITHMS.SHA256,
-            label=None,
-        )
-    )
-    return encrypted_data
-
-def RSA_decrypt(private_key, message):
-    #load private key
-    with open('private_key.pem', 'rb') as private_key_file:
-        private_key_data = private_key_file.read()
-        private_key = serialization.load_pem_private_key(private_key_data, password=None)
-    # Decrypt the data with the private key
-    decrypted_data = private_key.decrypt(
-        message,
-        padding.OAEP(
-            mgf=padding.MGF1(algorithm=padding.ALGORITHMS.SHA256),
-            algorithm=padding.ALGORITHMS.SHA256,
-            label=None,
-        )
-    )
-
-    return decrypted_data
-
-def AES_keygen():
-    # Generate a random AES key
-    key = Fernet.generate_key()
-
-    # Create an AES cipher with the key
-    cipher = Fernet(key)
-
-    return key, cipher
-
-def AES_encrypt(cipher, message):
-
-    # Encrypt the data
-    encrypted_data = cipher.encrypt(message)
-
-    return encrypted_data
-
-def AES_decrypt(cipher, message):
-    # Decrypt the data
-    decrypted_data = cipher.decrypt(message)
-
-    return decrypted_data.decode("utf-8")
+print(f"Original message: {message}")
+print(f"Ciphertext: {ciphertext}")
+print(f"Decrypted message: {decrypted_message}")
